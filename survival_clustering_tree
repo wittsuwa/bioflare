@@ -1,3 +1,58 @@
 #########Survival Clustering Tree analysis for patient group clustering
 
-#Download relevant libraries
+###Download relevant libraries
+library(SurvivalClusteringTree)
+library(survival)
+library(tidyverse)
+library(WeightedCluster)
+
+###import metadata
+metadata <- read.csv("directory")
+str(metadata)
+
+###create survival matrix
+survival_forest_data <- survival_forest(survival_outcome = Surv(x1, x2)~1,
+numeric_predictor = ~y1,y2,
+factor_predictor = ~z1,z2,
+data = metadata,
+nboot = 100,
+min_weights=20)
+
+distance_data <- predict_distance_forest(
+survival_forest_data, 
+numeric_predictor = ~y1,y2,
+factor_predictor = ~z1,z2,
+data = metadata)
+
+dist <- as.dist(distance_data$mean_distance)
+
+cmdscale_fit <- cmdscale(dist)
+
+hcluster <- hclust(dist, method = "average")
+
+dendrogram <- as.dendrogram(hcluster)
+
+plot(dendrogram)
+
+clustrange <- as.clustrange(hclust,diss = dist, ncluster = 10)
+df_ASWw <- data.frame(nclus = 2:10, ASWw = clustrange$stats[,"ASWw"])
+
+ggplot(df_ASWw, aes(x=nclus, y=ASWw)) +
+geom_line() +
+geom_vline(xintercept=9, lty=2) +
+theme_bw()
+
+result_data <- data.frame(
+x = a_cmdscale_fit[,1],
+y = a_cmdscale_fit[,2],
+truth = metadata$anything,
+cluster = factor(cutree(hcluster, 7))
+)
+
+
+gridExtra::grid.arrange(
+ggplot(result_data, aes(x=x, y=y, color = truth)) + geom_point() + theme_bw(),
+ggplot(result_data, aes(x=x, y=y, color=cluster)) + geom_point() + theme_bw(), ncol = 2
+)
+
+
