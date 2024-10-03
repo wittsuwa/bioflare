@@ -1,4 +1,4 @@
-#########Survival Clustering Tree analysis for patient group clustering
+#########Survival Clustering Tree analysis for patient group clustering ##
 
 ###Download relevant libraries
 library(SurvivalClusteringTree)
